@@ -1,0 +1,131 @@
+{
+  "name": "@getdigital/observability",
+  "version": "0.1.0",
+  "description": "Shared observability package for GetDigital projects — Sentry, Dash0/OTel, Plausible, Lighthouse CI",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./sentry/server": {
+      "types": "./dist/sentry/server.d.ts",
+      "default": "./dist/sentry/server.js"
+    },
+    "./sentry/client": {
+      "types": "./dist/sentry/client.d.ts",
+      "default": "./dist/sentry/client.js"
+    },
+    "./sentry/edge": {
+      "types": "./dist/sentry/edge.d.ts",
+      "default": "./dist/sentry/edge.js"
+    },
+    "./sentry/nextjs": {
+      "types": "./dist/sentry/nextjs.d.ts",
+      "default": "./dist/sentry/nextjs.js"
+    },
+    "./dash0/server": {
+      "types": "./dist/dash0/server.d.ts",
+      "default": "./dist/dash0/server.js"
+    },
+    "./dash0/fastify": {
+      "types": "./dist/dash0/fastify-plugin.d.ts",
+      "default": "./dist/dash0/fastify-plugin.js"
+    },
+    "./dash0/express": {
+      "types": "./dist/dash0/express-middleware.d.ts",
+      "default": "./dist/dash0/express-middleware.js"
+    },
+    "./dash0/metrics": {
+      "types": "./dist/dash0/metrics.d.ts",
+      "default": "./dist/dash0/metrics.js"
+    },
+    "./plausible": {
+      "types": "./dist/plausible/index.d.ts",
+      "default": "./dist/plausible/index.js"
+    },
+    "./lighthouse/config": {
+      "default": "./src/lighthouse/lighthouserc.base.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/lighthouse"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": ">=1.7.0",
+    "@opentelemetry/auto-instrumentations-node": ">=0.40.0",
+    "@opentelemetry/exporter-metrics-otlp-http": ">=0.48.0",
+    "@opentelemetry/exporter-trace-otlp-http": ">=0.48.0",
+    "@opentelemetry/sdk-node": ">=0.48.0",
+    "@sentry/nextjs": ">=10.0.0",
+    "@sentry/node": ">=10.0.0",
+    "@sentry/react": ">=10.0.0",
+    "express": ">=4.0.0",
+    "fastify": ">=4.0.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@sentry/nextjs": {
+      "optional": true
+    },
+    "@sentry/node": {
+      "optional": true
+    },
+    "@sentry/react": {
+      "optional": true
+    },
+    "@opentelemetry/api": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-node": {
+      "optional": true
+    },
+    "@opentelemetry/exporter-trace-otlp-http": {
+      "optional": true
+    },
+    "@opentelemetry/exporter-metrics-otlp-http": {
+      "optional": true
+    },
+    "@opentelemetry/auto-instrumentations-node": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "fastify": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.215.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.215.0",
+    "@opentelemetry/resources": "^2.7.0",
+    "@opentelemetry/sdk-metrics": "^2.7.0",
+    "@opentelemetry/sdk-node": "^0.215.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
+    "@sentry/node": "^10.49.0",
+    "@sentry/react": "^10.49.0",
+    "@types/express": "^5.0.6",
+    "@types/react": "^19.2.14",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GetDigitalOS/observability.git"
+  },
+  "private": false,
+  "license": "UNLICENSED"
+}
