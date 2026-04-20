@@ -18,7 +18,7 @@ export async function initDash0(config?: Dash0Config): Promise<void> {
     process.env.OTEL_SERVICE_NAME ??
     'unknown-service';
   const environment = config?.environment ?? (prod ? 'production' : 'development');
-  const endpoint = config?.endpoint ?? 'https://ingress.us1.dash0.com';
+  const endpoint = config?.endpoint ?? 'https://ingress.us-west-2.aws.dash0.com';
 
   try {
     const { NodeSDK } = await import('@opentelemetry/sdk-node');
