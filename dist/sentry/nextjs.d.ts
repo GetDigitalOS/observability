@@ -9,7 +9,7 @@ import type { SentryConfig, SentryBuildOptions } from '../types.js';
  * export default withObservabilitySentryConfig({ reactStrictMode: true });
  * ```
  */
-export declare function withObservabilitySentryConfig(nextConfig: Record<string, unknown>, opts?: SentryBuildOptions): Promise<Record<string, unknown>>;
+export declare function withObservabilitySentryConfig<T extends object>(nextConfig: T, opts?: SentryBuildOptions): Promise<T>;
 /**
  * Create Next.js instrumentation hooks for Sentry.
  * Returns `register` and `onRequestError` functions for use in instrumentation.ts.

@@ -11,15 +11,16 @@ import { isCI } from '../env.js';
  * export default withObservabilitySentryConfig({ reactStrictMode: true });
  * ```
  */
-export async function withObservabilitySentryConfig(
-  nextConfig: Record<string, unknown>,
+export async function withObservabilitySentryConfig<T extends object>(
+  nextConfig: T,
   opts?: SentryBuildOptions,
-): Promise<Record<string, unknown>> {
+): Promise<T> {
   try {
     // Dynamic import with string variable to avoid tsc resolving at build time
     const nextjsModule = '@sentry/nextjs';
     const { withSentryConfig } = await import(/* webpackIgnore: true */ nextjsModule) as {
-      withSentryConfig: (config: Record<string, unknown>, opts: Record<string, unknown>) => Record<string, unknown>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      withSentryConfig: (config: any, opts: Record<string, unknown>) => T;
     };
     return withSentryConfig(nextConfig, {
       org: opts?.org ?? process.env.SENTRY_ORG,
