@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { isCI } from '../env.js';
 /**
  * Wrap a Next.js config with Sentry's build-time plugin.
@@ -5,16 +6,19 @@ import { isCI } from '../env.js';
  *
  * Usage in next.config.ts:
  * ```ts
- * import { withObservabilitySentryConfig } from '@getdigital/observability/sentry/nextjs';
- * export default withObservabilitySentryConfig({ reactStrictMode: true });
+ * import { withObservabilitySentryConfig } from '@getdigitalos/observability/sentry/nextjs';
+ * export default withObservabilitySentryConfig(nextConfig);
  * ```
+ *
+ * Synchronous — no top-level await needed in next.config.ts.
  */
-export async function withObservabilitySentryConfig(nextConfig, opts) {
+export function withObservabilitySentryConfig(nextConfig, opts) {
     try {
-        // Dynamic import with string variable to avoid tsc resolving at build time
-        const nextjsModule = '@sentry/nextjs';
-        const { withSentryConfig } = await import(/* webpackIgnore: true */ nextjsModule);
-        return withSentryConfig(nextConfig, {
+        // Use createRequire so we can synchronously require the CJS build of @sentry/nextjs
+        // from within an ESM package, without forcing the caller to use top-level await.
+        const require = createRequire(import.meta.url);
+        const sentryNextjs = require('@sentry/nextjs');
+        return sentryNextjs.withSentryConfig(nextConfig, {
             org: opts?.org ?? process.env.SENTRY_ORG,
             project: opts?.project ?? process.env.SENTRY_PROJECT,
             silent: opts?.silent ?? !isCI(),
@@ -34,7 +38,7 @@ export async function withObservabilitySentryConfig(nextConfig, opts) {
  *
  * Usage in src/instrumentation.ts:
  * ```ts
- * import { createInstrumentation } from '@getdigital/observability/sentry/nextjs';
+ * import { createInstrumentation } from '@getdigitalos/observability/sentry/nextjs';
  * export const { register, onRequestError } = createInstrumentation();
  * ```
  */

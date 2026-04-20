@@ -5,18 +5,20 @@ import type { SentryConfig, SentryBuildOptions } from '../types.js';
  *
  * Usage in next.config.ts:
  * ```ts
- * import { withObservabilitySentryConfig } from '@getdigital/observability/sentry/nextjs';
- * export default withObservabilitySentryConfig({ reactStrictMode: true });
+ * import { withObservabilitySentryConfig } from '@getdigitalos/observability/sentry/nextjs';
+ * export default withObservabilitySentryConfig(nextConfig);
  * ```
+ *
+ * Synchronous — no top-level await needed in next.config.ts.
  */
-export declare function withObservabilitySentryConfig<T extends object>(nextConfig: T, opts?: SentryBuildOptions): Promise<T>;
+export declare function withObservabilitySentryConfig<T extends object>(nextConfig: T, opts?: SentryBuildOptions): T;
 /**
  * Create Next.js instrumentation hooks for Sentry.
  * Returns `register` and `onRequestError` functions for use in instrumentation.ts.
  *
  * Usage in src/instrumentation.ts:
  * ```ts
- * import { createInstrumentation } from '@getdigital/observability/sentry/nextjs';
+ * import { createInstrumentation } from '@getdigitalos/observability/sentry/nextjs';
  * export const { register, onRequestError } = createInstrumentation();
  * ```
  */
