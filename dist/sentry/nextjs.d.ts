@@ -1,17 +1,17 @@
 import type { SentryConfig, SentryBuildOptions } from '../types.js';
 /**
- * Wrap a Next.js config with Sentry's build-time plugin.
- * Handles source map uploads, release tracking, and build instrumentation.
+ * Returns sensible default build options for Sentry's Next.js plugin.
+ * Use this with `withSentryConfig` from `@sentry/nextjs` directly —
+ * we don't wrap it because Webpack can't bundle dynamic requires in next.config.ts.
  *
  * Usage in next.config.ts:
  * ```ts
- * import { withObservabilitySentryConfig } from '@getdigitalos/observability/sentry/nextjs';
- * export default withObservabilitySentryConfig(nextConfig);
+ * import { withSentryConfig } from '@sentry/nextjs';
+ * import { defaultSentryBuildOptions } from '@getdigitalos/observability/sentry/nextjs';
+ * export default withSentryConfig(nextConfig, defaultSentryBuildOptions());
  * ```
- *
- * Synchronous — no top-level await needed in next.config.ts.
  */
-export declare function withObservabilitySentryConfig<T extends object>(nextConfig: T, opts?: SentryBuildOptions): T;
+export declare function defaultSentryBuildOptions(opts?: SentryBuildOptions): Record<string, unknown>;
 /**
  * Create Next.js instrumentation hooks for Sentry.
  * Returns `register` and `onRequestError` functions for use in instrumentation.ts.
