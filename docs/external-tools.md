@@ -53,9 +53,11 @@ Key is in **My Settings > API Settings**. A future `hub` command could read `reg
 
 ---
 
-## WebPageTest — Ad-hoc performance forensics
+## WebPageTest (by Catchpoint) — Ad-hoc performance forensics
 
 Use WebPageTest when Lighthouse flags an issue and you need deeper detail, or when you want to test performance from a specific geographic region. This is a complement to Lighthouse CI, not a replacement.
+
+> **Note (2026-04):** WebPageTest is now part of Catchpoint. The dashboard is at [portal.catchpoint.com](https://portal.catchpoint.com/) and the API docs are at [docs.catchpoint.com/wptpro/docs/rest-api-1](https://docs.catchpoint.com/wptpro/docs/rest-api-1). The classic `webpagetest.org` still works as a public test runner, but account / API access goes through the Catchpoint portal.
 
 ### When to use
 
@@ -64,24 +66,29 @@ Use WebPageTest when Lighthouse flags an issue and you need deeper detail, or wh
 - **Competitor benchmarking** — run your URL vs. competitor URL side-by-side, filmstrip comparison.
 - **Investor/sales demos** — the filmstrip visualization is compelling for non-technical audiences.
 
-### Free tier
+### Starter (free) plan
 
-- ~200 tests/month per API key
-- Unlimited public runs (no API, interactive web UI)
-- Sign up at [webpagetest.org](https://www.webpagetest.org/)
+- **150 test runs/month** via the portal or API
+- Locations include Dulles (VA), London (UK), plus additional via "Other Locations"
+- Devices: Desktop Chrome, iPhone 15, iPad, iPhone 14 Pro, plus others
+- Performance tests + Lighthouse tests (integrated, same dashboard)
+- Sign up at [portal.catchpoint.com](https://portal.catchpoint.com/)
 
 ### Usage
 
-**Interactive (no setup):** just paste a URL at [webpagetest.org](https://www.webpagetest.org/) and run.
+**Interactive (dashboard):** [portal.catchpoint.com](https://portal.catchpoint.com/) → **Instant Tests** → paste URL → choose device/location → **Run Test**.
 
-**API (for scheduled tests):**
+**API (for scripted tests):**
 ```bash
-curl "https://www.webpagetest.org/runtest.php?url=https://your-site.com&k=YOUR_API_KEY&f=json"
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://www.webpagetest.org/runtest.php?url=https://your-site.com&f=json"
 ```
+
+API key is generated in the Catchpoint portal. Full REST reference: [docs.catchpoint.com/wptpro/docs/rest-api-1](https://docs.catchpoint.com/wptpro/docs/rest-api-1).
 
 ### Why not automate in CI?
 
-Lighthouse CI already catches regressions on every commit. WebPageTest adds value as an investigation tool, not a gate. Running it on every build would burn the free-tier quota and add flaky failures (perf scores vary by test location/time).
+Lighthouse CI already catches regressions on every commit. WebPageTest adds value as an investigation tool, not a gate. Running it on every build would burn the 150/mo starter quota fast and add flaky failures (perf scores vary by test location/time).
 
 **Mental model:** Lighthouse CI = automated smoke alarm. WebPageTest = forensic investigation when the alarm goes off.
 
@@ -93,7 +100,7 @@ Lighthouse CI already catches regressions on every commit. WebPageTest adds valu
 
 **Already captured automatically by:**
 - **Sentry browser SDK** — field data (real users)
-- **Lighthouse CI** — lab data (synthetic)
-- **WebPageTest** — lab data with multi-location support (when used)
+- **Lighthouse CI** — lab data (synthetic), every deploy
+- **WebPageTest / Catchpoint** — lab data with multi-location support + filmstrip + waterfall (ad-hoc). Also runs Lighthouse as a checkbox option in the same dashboard, so you can compare its Lighthouse score against the CI score.
 
-No action needed — all three sources are already wired up for projects using this package.
+No action needed — all three sources are wired up for projects using this package.
