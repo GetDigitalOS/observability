@@ -3,13 +3,19 @@ export interface SentryConfig {
   dsn?: string;
   /** Environment name. Defaults to NODE_ENV. */
   environment?: string;
-  /** Fraction of transactions to trace (0-1). Defaults to 0.1 in production, 1.0 in development. */
+  /**
+   * Fraction of transactions to trace (0-1). Defaults to 0 — Dash0 owns tracing.
+   * Override only if you specifically need Sentry's trace UI (e.g., short-term comparison).
+   */
   tracesSampleRate?: number;
   /** Fraction of sessions to replay (0-1). Defaults to 0. */
   replaysSampleRate?: number;
   /** Fraction of error sessions to replay (0-1). Defaults to 1.0. */
   replaysOnErrorSampleRate?: number;
-  /** Fraction of transactions to profile (0-1). Defaults to 0.1 in production, 0 in development. */
+  /**
+   * Fraction of transactions to profile (0-1). Defaults to 0 — Dash0 owns runtime metrics.
+   * Override only if you specifically need Sentry's profiler UI.
+   */
   profilesSampleRate?: number;
   /** Scrub PII (authorization, cookie headers) from events. Defaults to true. */
   scrubPii?: boolean;

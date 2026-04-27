@@ -104,3 +104,79 @@ Lighthouse CI already catches regressions on every commit. WebPageTest adds valu
 - **WebPageTest / Catchpoint** — lab data with multi-location support + filmstrip + waterfall (ad-hoc). Also runs Lighthouse as a checkbox option in the same dashboard, so you can compare its Lighthouse score against the CI score.
 
 No action needed — all three sources are wired up for projects using this package.
+
+---
+
+## Grafana OSS / LGTM stack — Considered, not adopted (2026-04-27)
+
+**Decision:** We use **Dash0** as the OTel backend, not self-hosted Grafana + Loki + Mimir + Tempo.
+
+### Why this was considered
+
+Grafana OSS (the LGTM stack — Loki for logs, Grafana for dashboards, Mimir/Prometheus for metrics, Tempo for traces) is the de facto open-source standard for observability. It is comprehensive, free of license cost, and widely adopted.
+
+### Why we did not adopt it
+
+Grafana would **replace** Dash0, not complement it. Both occupy the same slot in our architecture: an OTel-compatible backend that ingests traces and metrics from `@getdigitalos/observability/dash0/*`. Running both yields no additional signal — only duplicated cost and split dashboards.
+
+The real choice is **managed (Dash0) vs. self-hosted (LGTM)**. We chose managed because:
+
+1. **Single operator today.** Running Loki + Mimir + Tempo + Grafana on our infrastructure is a part-time job. Dash0 absorbs that operational load.
+2. **OTel keeps the door open.** All instrumentation goes through OpenTelemetry. Swapping Dash0 for self-hosted Grafana later is a backend config change (endpoint + auth headers), not a code rewrite. This is the entire reason we standardized on OTel.
+3. **Cost is currently below the break-even point.** Self-hosting LGTM only wins when the managed bill exceeds the all-in cost of running, securing, backing up, and upgrading four services.
+
+### When to revisit this decision
+
+Move to self-hosted Grafana OSS when **any** of the following becomes true:
+
+- Dash0 pricing exceeds the all-in cost of running LGTM (compute + storage + operator time).
+- Dash0's retention window is insufficient for compliance or audit requirements (e.g., HEA, GoldenThread regulated data).
+- Dash0 cardinality/quota limits constrain instrumentation we need.
+- The team grows enough that operating LGTM is not a side-job for one person.
+
+Until at least one of those triggers fires, the answer to "should we adopt Grafana?" is **no — we already have its OTel-managed equivalent**.
+
+---
+
+## Sentry vs. Dash0 — Role split, not a vendor choice (2026-04-27)
+
+**Decision:** We run **both** Sentry and Dash0. They are not competing products in our stack — they own different roles. Periodic suggestions to "consolidate by removing Sentry and sending everything to Dash0 via OTel" should be evaluated against this section before being acted on.
+
+### Role split
+
+| Concern | Owner | Why |
+|---|---|---|
+| Application errors (server + browser) | **Sentry** | Stack-trace grouping, fingerprinting, regression detection, source map symbolication, release health |
+| Domain / business errors (`captureBusinessError`) | **Sentry** | Same triage UX as application errors — surfaces in the same issue list |
+| Breadcrumbs / lifecycle events leading up to errors | **Sentry** | Attached to error reports for debugging context |
+| PII scrubbing on error pipeline | **Sentry** (`beforeSend` hook) | See [src/sentry/pii.ts](../src/sentry/pii.ts) |
+| Browser session replay | **Sentry** | No equivalent in OTel/Dash0 |
+| Distributed traces | **Dash0** | OTel-native, no proprietary schema remap |
+| Application & runtime metrics | **Dash0** | OTel-native, vendor-neutral instrumentation |
+| Logs (when added) | **Dash0** | OTel-native log records with resource attributes |
+
+### What changed in the package (2026-04-27)
+
+To enforce the split and avoid double-billing for traces, [`initSentry`](../src/sentry/server.ts) now defaults `tracesSampleRate` and `profilesSampleRate` to `0`. Sentry no longer collects spans or profiles unless a caller explicitly opts back in. Dash0 is the trace and metrics backend.
+
+### Why this is not "vendor sprawl"
+
+Both vendors charge for what they ingest. Because Sentry no longer ingests traces or profiles, our Sentry bill is now scoped to errors + (optional) session replay only — the categories where Sentry's UX is materially better than an OTel backend.
+
+### Why we did not replace Sentry with OTel-to-Dash0
+
+A recommendation periodically surfaces to remove the `@sentry/*` dependencies entirely and send exception data to Dash0 as OTel span events or log records. We rejected this because:
+
+1. **OTel error tooling lags Sentry by years.** Span events and `recordException` exist, but the triage workflow ("47 grouped instances of TypeError, regressed in v2.3.1, affecting 12% of sessions") is not reproducible by tailing logs in any OTel backend today, including Dash0.
+2. **Dash0's own positioning page** ([dash0.com/sentry-alternative](https://www.dash0.com/sentry-alternative)) does not claim parity on source maps, session replay, release health, breadcrumbs, or fingerprinting. It pitches on OTel-native ingestion, transparent pricing, and resource-based navigation — all of which we already get for traces and metrics.
+3. **PII scrubbing, release health, source map upload, and session replay would all need to be rebuilt** if we removed Sentry. That is real engineering cost for no offsetting capability.
+
+### When to revisit this decision
+
+Re-evaluate removing Sentry when **any** of the following becomes true:
+
+- An OTel backend (Dash0 or otherwise) ships first-class error grouping, source map symbolication, and release health that match Sentry's triage UX.
+- Sentry's bill becomes a meaningful line item that exceeds the cost of rebuilding the above on Dash0.
+- Error volume drops low enough that "search logs by exception type" is a sufficient triage workflow.
+
+Until at least one of those triggers fires, the answer to "should we drop Sentry for OTel-only?" is **no — Sentry and Dash0 own non-overlapping roles, and we have already eliminated the only real overlap (traces) by defaulting Sentry tracing to off**.

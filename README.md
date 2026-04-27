@@ -9,10 +9,12 @@ One package, one API, one upgrade path.
 ```json
 {
   "dependencies": {
-    "@getdigitalos/observability": "github:GetDigitalOS/observability#v0.1.1"
+    "@getdigitalos/observability": "github:GetDigitalOS/observability#v0.2.0"
   }
 }
 ```
+
+> **v0.2.0 behavior change:** Sentry tracing and profiling default to off — Dash0 owns traces and metrics. Sentry's role is now errors, breadcrumbs, and release health only. See [docs/external-tools.md](docs/external-tools.md#sentry-vs-dash0--role-split-not-a-vendor-choice-2026-04-27) for the role split rationale.
 
 ## Quick start — Node (Fastify/Express)
 

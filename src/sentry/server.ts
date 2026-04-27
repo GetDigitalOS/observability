@@ -21,8 +21,10 @@ export async function initSentry(config?: SentryConfig): Promise<void> {
   mod.init({
     dsn,
     environment: config?.environment ?? (prod ? 'production' : 'development'),
-    tracesSampleRate: config?.tracesSampleRate ?? (prod ? 0.2 : 1.0),
-    profilesSampleRate: config?.profilesSampleRate ?? (prod ? 0.1 : 0),
+    // Dash0 owns traces and runtime metrics. Sentry's role here is errors,
+    // breadcrumbs, and release health only. See docs/external-tools.md ("Sentry vs. Dash0").
+    tracesSampleRate: config?.tracesSampleRate ?? 0,
+    profilesSampleRate: config?.profilesSampleRate ?? 0,
     beforeSend: config?.scrubPii !== false ? scrubPii : undefined,
   });
 }

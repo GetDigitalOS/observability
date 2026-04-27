@@ -1,6 +1,6 @@
 {
   "name": "@getdigitalos/observability",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Shared observability package for GetDigital projects — Sentry, Dash0/OTel, Plausible, Lighthouse CI",
   "type": "module",
   "exports": {
