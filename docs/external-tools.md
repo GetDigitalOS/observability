@@ -4,52 +4,122 @@ Tools that complement the `@getdigitalos/observability` package but don't ship a
 
 ---
 
-## UptimeRobot — External uptime monitoring
+## Better Stack Uptime — External uptime monitoring + status page
 
-UptimeRobot pings your URLs from external locations and alerts on downtime. No code integration — configure via their dashboard.
+Better Stack pings your URLs from external locations, alerts on downtime, and hosts a public status page. No code integration — configure via their dashboard at [betterstack.com](https://betterstack.com).
+
+> **Decision (2026-04-28):** Better Stack replaced UptimeRobot as our uptime monitoring + status page tool. See "Why Better Stack over UptimeRobot" below for the cost/feature analysis. UptimeRobot section preserved at the bottom of this doc as historical reference.
+
+### Free-tier coverage
+
+- **10 monitors** (we currently use ~7)
+- **10 heartbeats** (cron / serverless job monitoring)
+- **1 status page** with custom-branded subdomain
+- **3-minute check interval**
+- **Playwright transaction monitoring** — real Chrome browser interaction tests
+- **Screenshots + traceroute + MTR** captured on failure
+- **SSL/domain expiration monitoring**
+- Multi-channel alerts: SMS, email, Slack, Teams, push
+
+### TOS verified (2026-04-28)
+
+Better Stack's Terms of Use contain **no clause** restricting the free tier to personal/non-commercial use. The "Free for personal projects" line on the pricing page is marketing copy, not an enforced restriction. Free tier is usable for our commercial workloads.
 
 ### Adding a monitor
 
-1. Log in at [uptimerobot.com](https://uptimerobot.com)
-2. **+ Add New Monitor**
+1. Log in at [betterstack.com](https://betterstack.com)
+2. **Monitors → Create monitor**
 3. Configure:
-   - **Type:** HTTP(s)
-   - **Friendly Name:** `{project-name} - Production`
+   - **Monitor type:** `HTTP / website` (or `Keyword` for body content checks)
+   - **Name:** `{project-name} — Production`
    - **URL:** Health endpoint (see table below)
-   - **Monitoring Interval:** 5 minutes (free tier)
-4. Set **Alert Contacts** (email, Slack webhook, etc.)
+   - **Check frequency:** 3 minutes (free-tier max — fine for our SLO)
+   - **Request timeout:** 30 seconds
+   - **Verify SSL:** On
+   - **On-call escalation policy:** start with the default; switch to a paid Responder seat only when on-call rotations become a real need
+4. **Alert me when:** site is down for **2 consecutive checks** (avoids single-blip noise)
 5. Save
 
 ### Health endpoints by project
 
-| Project | URL | Health endpoint |
-|---------|-----|-----------------|
-| Conduit | `conduit-production-f80c.up.railway.app` | `/api/health` |
-| ActFast | `app-actfast.steep-band-be51.workers.dev` | `/` |
-| GoldenThread | `app-goldenthread.steep-band-be51.workers.dev` | `/` |
-| HEA Platform (API) | Railway URL | `/api/v1/health` |
-| HEA Platform (Web) | `partner.homewealthiq.com` | `/` |
-| MyLTCInsurance | Cloudflare Pages URL | `/` |
-| Habanero Shaker | TBD | `/` |
+| Project | Full URL | Type | Expected body keyword |
+|---|---|---|---|
+| Conduit | `https://conduit-production-f80c.up.railway.app/api/health` | HTTP + Keyword | `"status":"ok"` |
+| ActFast | `https://app-actfast.steep-band-be51.workers.dev/` | HTTP | — |
+| GoldenThread | `https://app-goldenthread.steep-band-be51.workers.dev/` | HTTP | — |
+| HEA Platform (Web) | `https://hea-web-production.up.railway.app/` | HTTP | — |
+| HEA Platform (API) | `https://hea-web-production.up.railway.app/api/v1/health` | HTTP + Keyword | `"status":"ok"` (verify endpoint exists) |
+| MyLTCInsurance | `https://website-myltcinsurance.pages.dev/` | HTTP | — |
+| Habanero Shaker | `https://website-habaneroshaker.pages.dev/` | HTTP | — |
 
 ### Recommended monitor types
 
-- **HTTP(s)** — Primary: checks URL returns 200 OK
-- **Keyword** — Secondary: checks a specific string in response (e.g., `"status":"ok"`)
-- **Heartbeat** — For cron jobs: your app pings UptimeRobot instead of the other way around
+- **HTTP** — Primary: checks URL returns 2xx
+- **Keyword** — Secondary (only for projects with a structured health endpoint): asserts a specific string in the response body. Use sparingly — each Keyword monitor consumes one of the 10 free slots.
+- **Heartbeat** — For cron jobs and BullMQ workers: your app pings Better Stack on success; an alert fires if no ping arrives within the expected interval.
 
-### Status page (optional)
+### Status page
 
-UptimeRobot generates a public status page: **My Settings > Status Pages**. Free tier: 1 page. Pro ($7/mo): custom domains + branding.
+- One status page included on the free tier, hosted on a custom subdomain.
+- Add each monitor as a component on the same page rather than creating one page per project — additional public status pages are $12/mo (annual).
+- Status page URL: TBD once provisioned.
+
+### When to upgrade past free
+
+| Trigger | Upgrade |
+|---|---|
+| Need on-call rotations / incident escalation | $29/mo annual (1 Responder seat) |
+| >10 active monitors | +50-monitor pack at $21/mo annual |
+| Need a separate status page per brand/customer | +$12/mo annual per page |
+| Need <3-minute check intervals | $29/mo annual seat unlocks 30s checks |
+
+None of these are hit yet. Document any upgrade in this section so the cost is traceable.
 
 ### API automation (future)
 
-UptimeRobot's REST API can be automated from the project registry:
-- `POST /v2/newMonitor` — create
-- `POST /v2/getMonitors` — list
-- `POST /v2/editMonitor` — update
+Better Stack has a REST API for monitor and status-page management. A future `hub` command could read `registry/projects.json` and auto-provision monitors. Defer until manual setup proves the workflow.
 
-Key is in **My Settings > API Settings**. A future `hub` command could read `registry/projects.json` and auto-provision monitors.
+### Why Better Stack over UptimeRobot
+
+| Concern | UptimeRobot Free | Better Stack Free |
+|---|---|---|
+| Monitors | 50 | 10 (sufficient for current scale) |
+| Check frequency | 5 min | **3 min** |
+| Custom-branded status page | Pro ($7/mo) | **Free** |
+| Cron / heartbeat monitoring | No | **10 heartbeats included** |
+| Playwright transaction tests | No | **Yes** |
+| Screenshot + MTR on failure | No | **Yes** |
+| Cost for our 7-monitor commercial workload | $0 | $0 |
+
+UptimeRobot wins on raw monitor count (50 vs 10), but every other dimension favors Better Stack at our scale, including capabilities we'd otherwise pay for. The 10-monitor ceiling is a real constraint to track — when we cross it, the upgrade math is $21/mo for +50 monitors, which is still cheaper than UptimeRobot's $29/mo Team plan and includes more features.
+
+---
+
+## Better Stack Telemetry — Deferred decision
+
+Better Stack also sells a separate **Telemetry** product (logs, metrics, OTel-native traces with eBPF instrumentation, error tracking). On paper it overlaps with **Dash0** (traces + metrics) and **Sentry** (errors).
+
+**We have not adopted it.** Reasoning:
+
+1. We deliberately split Sentry and Dash0 by role (see "Sentry vs. Dash0" below). Unwinding that on the same day to chase single-vendor consolidation would be premature.
+2. Better Stack's error-tracking claim ("Catch bugs, get root cause") is a vendor marketing line we have not verified — same skepticism we applied to Dash0's Sentry-alternative pitch.
+3. Telemetry is a separate paid product. "Fewer vendors" is not automatically cheaper; consolidation math requires comparing actual bills.
+
+**Revisit triggers:**
+
+- Better Stack Uptime proves materially better in real use over 4–8 weeks → earns the deeper Telemetry evaluation.
+- Dash0 or Sentry pricing crosses a threshold where consolidation pays for itself.
+- Better Stack publishes credible feature parity on error grouping, source maps, release health, and session replay.
+
+Until then, the answer to "should we move logs/metrics/errors to Better Stack Telemetry?" is **not yet — separate evaluation required**.
+
+---
+
+## UptimeRobot — Historical reference (deprecated 2026-04-28)
+
+Replaced by Better Stack Uptime (see above). Account and existing monitors retained as a temporary fallback during the migration window. Decommission UptimeRobot account once all Better Stack monitors have run cleanly for 2 weeks.
+
+UptimeRobot's REST API was previously considered for `hub`-based auto-provisioning. That capability now belongs to Better Stack — see "API automation (future)" above.
 
 ---
 
